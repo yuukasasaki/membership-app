@@ -19,6 +19,8 @@ const canvasEl = ref<HTMLCanvasElement | null>(null)
 
 async function render() {
   if (!canvasEl.value || !props.text) return
+
+  // @ts-expect-error: 型定義がないけど問題ないよ！
   await QRCode.toCanvas(canvasEl.value, props.text, {
     width: props.size ?? 160,
     margin: 1,
@@ -31,6 +33,13 @@ watch(() => props.text, render)
 </script>
 
 <style scoped>
-.qr-wrap { display:inline-block; text-align:center; }
-.code { margin-top:8px; font-weight:600; letter-spacing:1px; }
+.qr-wrap {
+  display: inline-block;
+  text-align: center;
+}
+.code {
+  margin-top: 8px;
+  font-weight: 600;
+  letter-spacing: 1px;
+}
 </style>

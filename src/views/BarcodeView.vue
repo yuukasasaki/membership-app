@@ -1,68 +1,89 @@
 <script setup lang="ts">
-import { computed } from 'vue'
-import MemberBarcode from '@/components/MemberBarcode.vue'
-import MemberQr from '@/components/MemberQr.vue'
-import { currentEmail, logout } from '@/stores/auth'
+import { ref } from 'vue'
 import { useRouter } from 'vue-router'
 
 const router = useRouter()
-const email = computed(() => currentEmail.value ?? '')
+const email = ref('')
+const password = ref('')
+const firstName = ref('')
+const lastName = ref('')
+const errorMsg = ref('')
+const successMsg = ref('')
 
-// デモ用: メールから6桁コード生成（既に入れてあるやつ）
-function hash(s: string): number {
-  let h = 0
-  for (let i = 0; i < s.length; i++) h = (h * 31 + s.charCodeAt(i)) >>> 0
-  return h
+// 会員コードを自動採番（例：時刻ベースで一意に）
+function generateMemberCode() {
+  const timestamp = Date.now().toString().slice(-6)
+  return `M${timestamp}`
 }
-const memberCode = computed(() => {
-  const hval = hash(email.value)
-  const six = String(hval % 900000 + 100000)
-  return `M${six}`
-})
 
-function onLogout() {
-  logout()
-  router.push({ name: 'login' })
+async function submit() {
+  errorMsg.value = ''
+  successMsg.value = ''
+
+  if (!email.value || !password.value || !firstName.value || !lastName.value) {
+    errorMsg.value = 'すべての項目を入力してください'
+    return
+  }
+
+  const memberCode = generateMemberCode()
+
+  const body = {
+    customerCode: memberCode,
+    firstName: firstName.value,
+    lastName: lastName.value,
+    firstKana: 'タロウ', // 仮でOK（スマレジはカナ必須）
+    lastKana: 'ヤマダ',
+    mailAddress: email.value,
+    sex: '0',
+    mailReceiveFlag: '1',
+  }
+
+  const res = await fetch('https://smaregi-callback-worker.mcrn-ch.workers.dev/register', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(body),
+  })
+
+  const json = await res.json()
+
+  if (!res.ok) {
+    errorMsg.value = json?.detail || json?.message || `エラー（${res.status}）`
+  } else {
+    // ✅ ローカルにも保存（ログインに使う）
+    localStorage.setItem('user', JSON.stringify({
+      email: email.value,
+      password: password.value,
+      memberCode
+    }))
+
+    successMsg.value = '会員登録が完了しました！'
+    setTimeout(() => router.push({ name: 'login' }), 1500)
+  }
 }
 </script>
 
 <template>
-  <div class="page" v-if="email">
-    <div class="head">
-      <h1>会員証</h1>
-      <button @click="onLogout">ログアウト</button>
-    </div>
+  <div class="page">
+    <h1>会員登録</h1>
+    <form class="form" @submit.prevent="submit">
+      <label>姓 <input v-model="lastName" type="text" /></label>
+      <label>名 <input v-model="firstName" type="text" /></label>
+      <label>メールアドレス <input v-model="email" type="email" /></label>
+      <label>パスワード <input v-model="password" type="password" /></label>
+      <button type="submit">登録</button>
+    </form>
 
-    <div class="card">
-      <p class="label">会員コード</p>
-      <div class="grid">
-        <div>
-          <MemberBarcode :code="memberCode" />
-          <small>バーコード（CODE128）</small>
-        </div>
-        <div>
-          <MemberQr :text="memberCode" />
-          <small>QRコード</small>
-        </div>
-      </div>
-      <p class="email">{{ email }}</p>
-    </div>
-  </div>
-
-  <div v-else class="page">
-    <p>ログインしてください</p>
-    <router-link to="/login">ログインへ</router-link>
+    <p v-if="errorMsg" class="error">❌ {{ errorMsg }}</p>
+    <p v-if="successMsg" class="success">✅ {{ successMsg }}</p>
   </div>
 </template>
 
 <style scoped>
-.page { padding: 20px }
-.head { display:flex; justify-content:space-between; align-items:center; }
-.card { margin-top:16px; padding:16px; border:1px solid #ddd; border-radius:10px; display:inline-block; text-align:center; }
-.label { margin-bottom:8px; color:#666; }
-.email { margin-top:8px; color:#666; font-size:14px; }
-.grid { display:grid; grid-template-columns: 1fr 1fr; gap: 20px; align-items: start; }
-small { display:block; margin-top:6px; color:#777; }
-button { padding:8px 12px; border:none; border-radius:6px; background:#409eff; color:#fff; cursor:pointer; }
-button:hover { opacity:.9; }
+.page { padding: 20px; max-width: 420px; }
+.form { display: grid; gap: 10px; margin-top: 12px; }
+label { display: grid; gap: 4px; font-size: 14px; }
+input { padding: 8px 10px; border: 1px solid #ddd; border-radius: 8px; }
+button { margin-top: 10px; padding: 10px 16px; background:#409eff; border:none; color:#fff; border-radius:8px; cursor:pointer; }
+.error { color: #d33; margin-top: 10px; }
+.success { color: #2d7; margin-top: 10px; }
 </style>

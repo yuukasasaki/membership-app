@@ -12,6 +12,7 @@ import JsBarcode from 'jsbarcode'
 const props = defineProps<{
   code: string
   showText?: boolean
+  size?: number // ← 追加したこれを使うよ！
 }>()
 
 const svgEl = ref<SVGSVGElement | null>(null)
@@ -22,7 +23,7 @@ function render() {
   JsBarcode(svgEl.value, props.code, {
     format: 'CODE128',
     width: 2,
-    height: 64,
+    height: props.size ?? 80, // ← ここを変更！（デフォルト80）
     displayValue: props.showText ?? true,
   })
 }
@@ -32,5 +33,9 @@ watch(() => props.code, render)
 </script>
 
 <style scoped>
-.code { margin-top: 8px; font-weight: 600; letter-spacing: 2px; }
+.code {
+  margin-top: 8px;
+  font-weight: 600;
+  letter-spacing: 2px;
+}
 </style>

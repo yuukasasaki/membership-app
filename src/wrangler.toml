@@ -1,0 +1,8 @@
+name = "smaregi-callback-worker"
+type = "javascript"
+workers_dev = true
+
+[build.upload]
+format = "modules"
+dir = "./src"
+main = "index.ts"

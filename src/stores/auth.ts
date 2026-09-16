@@ -1,27 +1,17 @@
 // src/stores/auth.ts
 import { ref } from 'vue'
 
-const AUTH_KEY = 'membership_app_logged_in'
-const EMAIL_KEY = 'membership_app_email'
+export const currentEmail = ref<string | null>(localStorage.getItem('email'))
+export const isLoggedIn = ref(!!currentEmail.value)
 
-// 画面リロードしても状態を復元
-export const isLoggedIn = ref(localStorage.getItem(AUTH_KEY) === '1')
-export const currentEmail = ref<string | null>(localStorage.getItem(EMAIL_KEY))
-
-export function login(email?: string) {
+export function login(email: string) {
+  currentEmail.value = email
   isLoggedIn.value = true
-  localStorage.setItem(AUTH_KEY, '1')
-
-  if (email) {
-    currentEmail.value = email
-    localStorage.setItem(EMAIL_KEY, email)
-  }
+  localStorage.setItem('email', email)
 }
 
 export function logout() {
-  isLoggedIn.value = false
-  localStorage.removeItem(AUTH_KEY)
-
   currentEmail.value = null
-  localStorage.removeItem(EMAIL_KEY)
+  isLoggedIn.value = false
+  localStorage.removeItem('email')
 }
