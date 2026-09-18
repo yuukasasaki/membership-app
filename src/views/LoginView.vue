@@ -13,7 +13,9 @@
         <input v-model="password" type="password" required />
       </div>
 
-      <button type="submit">ログイン</button>
+      <button type="submit" :disabled="loading">
+        {{ loading ? 'ログイン中…' : 'ログイン' }}
+      </button>
     </form>
 
     <p v-if="message">{{ message }}</p>
@@ -25,14 +27,17 @@
 <script setup lang="ts">
 import { ref } from "vue";
 import { useRouter } from "vue-router";
+import { login as saveLogin } from "@/stores/auth";
 
 const router = useRouter();
 const email = ref("");
 const password = ref("");
 const message = ref("");
+const loading = ref(false);
 
 const login = async () => {
   message.value = "ログイン中...";
+  loading.value = true;
 
   try {
     const res = await fetch("https://smaregi-callback-worker.mcrn-ch.workers.dev/login", {
@@ -47,14 +52,16 @@ const login = async () => {
     const data = await res.json();
 
     if (res.ok && data.customerCode) {
-      localStorage.setItem("customerCode", data.customerCode);
+      saveLogin(data.customerCode);
       message.value = "ログイン成功！";
-      router.push("/mypage");
+      await router.push("/mypage");
     } else {
-      message.value = "メールアドレスまたはパスワードが正しくありません。";
+      message.value = data.error || "メールアドレスまたはパスワードが正しくありません。";
     }
-  } catch (err) {
-    message.value = `通信エラー: ${err}`;
+  } catch (err: unknown) {
+    message.value = `通信エラー: ${err instanceof Error ? err.message : String(err)}`;
+  } finally {
+    loading.value = false;
   }
 };
 </script>
@@ -90,5 +97,9 @@ button {
 }
 button:hover {
   background-color: #2980b9;
+}
+button:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
 }
 </style>
