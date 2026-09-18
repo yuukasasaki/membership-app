@@ -22,13 +22,14 @@
 import { ref, onMounted, nextTick } from "vue";
 import JsBarcode from "jsbarcode";
 import { useRouter } from "vue-router";
+import { currentCustomerCode, logout as clearLogin } from "@/stores/auth";
 
 const router = useRouter();
 const customerCode = ref<string | null>(null);
 const barcode = ref<SVGSVGElement | null>(null);
 
 onMounted(async () => {
-  customerCode.value = localStorage.getItem("customerCode");
+  customerCode.value = currentCustomerCode.value;
 
   // ✅ DOMの描画が完全に終わってからバーコード生成
   await nextTick();
@@ -49,7 +50,8 @@ onMounted(async () => {
 });
 
 const logout = () => {
-  localStorage.removeItem("customerCode");
+  clearLogin();
+  customerCode.value = null;
   router.push("/login");
 };
 </script>
