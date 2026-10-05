@@ -29,7 +29,7 @@
     <!-- 🔗 登録成功後に表示する「会員証リンク」 -->
     <div v-if="linkUrl" class="link-box">
       <p>🔗 会員証リンク：</p>
-      <input :value="linkUrl" readonly @focus="$event.target.select()" />
+      <input :value="linkUrl" readonly @focus="selectLink" />
       <button @click="copy">コピー</button>
 
       <p class="tip">※ このリンクをブックマーク or ホーム画面に追加すると、次回から開くだけで会員証を表示できます</p>
@@ -66,6 +66,12 @@ const copy = async () => {
   if (!linkUrl.value) return;
   await navigator.clipboard.writeText(linkUrl.value);
   message.value = "リンクをコピーしました！";
+};
+
+const selectLink = (event: FocusEvent) => {
+  if (event.target instanceof HTMLInputElement) {
+    event.target.select();
+  }
 };
 
 const submit = async () => {

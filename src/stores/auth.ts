@@ -1,17 +1,16 @@
-// src/stores/auth.ts
-import { ref } from 'vue'
+import { computed, ref } from 'vue'
 
-export const currentEmail = ref<string | null>(localStorage.getItem('email'))
-export const isLoggedIn = ref(!!currentEmail.value)
+const CUSTOMER_CODE_KEY = 'customerCode'
 
-export function login(email: string) {
-  currentEmail.value = email
-  isLoggedIn.value = true
-  localStorage.setItem('email', email)
+export const currentCustomerCode = ref<string | null>(localStorage.getItem(CUSTOMER_CODE_KEY))
+export const isLoggedIn = computed(() => Boolean(currentCustomerCode.value))
+
+export function login(customerCode: string) {
+  currentCustomerCode.value = customerCode
+  localStorage.setItem(CUSTOMER_CODE_KEY, customerCode)
 }
 
 export function logout() {
-  currentEmail.value = null
-  isLoggedIn.value = false
-  localStorage.removeItem('email')
+  currentCustomerCode.value = null
+  localStorage.removeItem(CUSTOMER_CODE_KEY)
 }
