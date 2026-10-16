@@ -106,11 +106,15 @@ const submit = async () => {
       return;
     }
 
-    // 2) 署名付きURLを発行（ブラウザだけで会員証を開けるリンク）
+    // 2) 本人確認後に署名付きURLを発行
+    // customerCode はブラウザから指定せず、Worker が登録済み会員から取得する
     const r2 = await fetch(`${API_BASE}/generate-link`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ customerCode }),
+      body: JSON.stringify({
+        mailAddress: email.value.trim(),
+        password: password.value,
+      }),
     });
     const d2 = await r2.json();
 
@@ -149,3 +153,4 @@ button:hover { background:#2980b9; }
 .link-box input { margin: .5rem 0; }
 .tip { color:#666; font-size: .9rem; margin: .5rem 0 1rem; }
 </style>
+
